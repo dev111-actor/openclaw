@@ -370,6 +370,9 @@ openclaw cron run <jobId>
 # Run only if due
 openclaw cron run <jobId> --due
 
+# Run with the scheduler's isolated-run context policy
+openclaw cron run <jobId> --as-scheduled
+
 # View run history
 openclaw cron runs --id <jobId> --limit 50
 

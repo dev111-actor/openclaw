@@ -44,7 +44,7 @@ import {
   resolveJobPayloadTextForMain,
 } from "./jobs.js";
 import { locked } from "./locked.js";
-import type { CronEvent, CronServiceState } from "./state.js";
+import type { CronEvent, CronRunEnvironment, CronServiceState } from "./state.js";
 import { ensureLoaded, persist } from "./store.js";
 import { DEFAULT_JOB_TIMEOUT_MS, resolveCronJobTimeoutMs } from "./timeout-policy.js";
 
@@ -107,10 +107,11 @@ type StartupCatchupPlan = {
 export async function executeJobCoreWithTimeout(
   state: CronServiceState,
   job: CronJob,
+  opts?: { runEnvironment?: CronRunEnvironment },
 ): Promise<Awaited<ReturnType<typeof executeJobCore>>> {
   const jobTimeoutMs = resolveCronJobTimeoutMs(job);
   if (typeof jobTimeoutMs !== "number") {
-    return await executeJobCore(state, job);
+    return await executeJobCore(state, job, undefined, undefined, opts);
   }
 
   const runAbortController = new AbortController();
@@ -136,9 +137,15 @@ export async function executeJobCoreWithTimeout(
     activeExecution = info ?? activeExecution;
     startTimeout();
   };
-  const corePromise = executeJobCore(state, job, runAbortController.signal, {
-    onExecutionStarted: deferTimeoutUntilExecutionStart ? onExecutionStarted : undefined,
-  });
+  const corePromise = executeJobCore(
+    state,
+    job,
+    runAbortController.signal,
+    {
+      onExecutionStarted: deferTimeoutUntilExecutionStart ? onExecutionStarted : undefined,
+    },
+    opts,
+  );
   if (!deferTimeoutUntilExecutionStart) {
     startTimeout();
   }
@@ -1326,6 +1333,7 @@ export async function executeJobCore(
   options?: {
     onExecutionStarted?: (info?: CronAgentExecutionStarted) => void;
   },
+  opts?: { runEnvironment?: CronRunEnvironment },
 ): Promise<
   CronRunOutcome &
     CronRunTelemetry & {
@@ -1367,7 +1375,7 @@ export async function executeJobCore(
     return await executeMainSessionCronJob(state, job, abortSignal, waitWithAbort);
   }
 
-  return await executeDetachedCronJob(state, job, abortSignal, resolveAbortError, options);
+  return await executeDetachedCronJob(state, job, abortSignal, resolveAbortError, options, opts);
 }
 
 async function executeMainSessionCronJob(
@@ -1488,6 +1496,7 @@ async function executeDetachedCronJob(
   options?: {
     onExecutionStarted?: (info?: CronAgentExecutionStarted) => void;
   },
+  opts?: { runEnvironment?: CronRunEnvironment },
 ): Promise<
   CronRunOutcome &
     CronRunTelemetry & {
@@ -1520,6 +1529,7 @@ async function executeDetachedCronJob(
   const res = await state.deps.runIsolatedAgentJob({
     job,
     message: job.payload.message,
+    runEnvironment: opts?.runEnvironment ?? "scheduled",
     abortSignal,
     onExecutionStarted: options?.onExecutionStarted,
   });

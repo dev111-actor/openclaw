@@ -75,6 +75,7 @@ function createCronContext(currentJob?: CronJob) {
     cron: {
       add: vi.fn(async () => ({ id: "cron-1" })),
       update: vi.fn(async () => ({ id: "cron-1" })),
+      enqueueRun: vi.fn(async () => ({ ok: true, enqueued: true, runId: "manual:cron-1:1:1" })),
       getDefaultAgentId: vi.fn(() => "main"),
       getJob: vi.fn(() => currentJob),
     },
@@ -103,6 +104,20 @@ async function invokeCronUpdate(params: Record<string, unknown>, currentJob: Cro
   const context = createCronContext(currentJob);
   const respond = vi.fn();
   await cronHandlers["cron.update"]({
+    req: {} as never,
+    params: params as never,
+    respond: respond as never,
+    context: context as never,
+    client: null,
+    isWebchatConnect: () => false,
+  });
+  return { context, respond };
+}
+
+async function invokeCronRun(params: Record<string, unknown>) {
+  const context = createCronContext();
+  const respond = vi.fn();
+  await cronHandlers["cron.run"]({
     req: {} as never,
     params: params as never,
     respond: respond as never,
@@ -180,6 +195,23 @@ describe("cron method validation", () => {
       }),
     );
     expect(respond).toHaveBeenCalledWith(true, { id: "cron-1" }, undefined);
+  });
+
+  it("passes asScheduled cron run params as scheduled run environment", async () => {
+    const { context, respond } = await invokeCronRun({
+      id: "cron-1",
+      mode: "force",
+      asScheduled: true,
+    });
+
+    expect(context.cron.enqueueRun).toHaveBeenCalledWith("cron-1", "force", {
+      runEnvironment: "scheduled",
+    });
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      { ok: true, enqueued: true, runId: "manual:cron-1:1:1" },
+      undefined,
+    );
   });
 
   it("accepts threadId on announce delivery update params", async () => {

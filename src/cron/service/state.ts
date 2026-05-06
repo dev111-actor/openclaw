@@ -98,6 +98,7 @@ export type CronServiceDeps = {
   runIsolatedAgentJob: (params: {
     job: CronJob;
     message: string;
+    runEnvironment?: CronRunEnvironment;
     abortSignal?: AbortSignal;
     onExecutionStarted?: (info?: CronAgentExecutionStarted) => void;
   }) => Promise<
@@ -172,6 +173,11 @@ export function createCronServiceState(deps: CronServiceDeps): CronServiceState 
 }
 
 export type CronRunMode = "due" | "force";
+export type CronRunEnvironment = "manual" | "scheduled";
+export type CronRunOptions = {
+  runEnvironment?: CronRunEnvironment;
+  runId?: string;
+};
 export type CronWakeMode = "now" | "next-heartbeat";
 
 export type CronStatusSummary = {

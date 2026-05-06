@@ -5,6 +5,7 @@ import type {
   CronListResult,
   CronRemoveResult,
   CronRunMode,
+  CronRunOptions,
   CronRunResult,
   CronStatusSummary,
   CronUpdateInput,
@@ -26,8 +27,8 @@ export interface CronServiceContract {
   add(input: CronAddInput): Promise<CronAddResult>;
   update(id: string, patch: CronUpdateInput): Promise<CronUpdateResult>;
   remove(id: string): Promise<CronRemoveResult>;
-  run(id: string, mode?: CronRunMode): Promise<CronServiceRunResult>;
-  enqueueRun(id: string, mode?: CronRunMode): Promise<CronServiceRunResult>;
+  run(id: string, mode?: CronRunMode, opts?: CronRunOptions): Promise<CronServiceRunResult>;
+  enqueueRun(id: string, mode?: CronRunMode, opts?: CronRunOptions): Promise<CronServiceRunResult>;
   getJob(id: string): CronJob | undefined;
   getDefaultAgentId(): string | undefined;
   wake(opts: { mode: CronWakeMode; text: string }): CronWakeResult;

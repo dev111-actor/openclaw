@@ -363,6 +363,56 @@ describe("runCronIsolatedAgentTurn — skill filter", () => {
         "existing-cli-session-def",
       );
     });
+
+    it("passes scheduled cron bootstrap context policy to CLI runs", async () => {
+      isCliProviderMock.mockReturnValue(true);
+      runCliAgentMock.mockResolvedValue({
+        payloads: [{ text: "output" }],
+        meta: {
+          agentMeta: { sessionId: "scheduled-cli-session", usage: { input: 5, output: 10 } },
+        },
+      });
+      mockCliFallbackInvocation();
+
+      await runCronIsolatedAgentTurn(
+        makeSkillParams({
+          runEnvironment: "scheduled",
+          job: makeSkillJob({
+            payload: { kind: "agentTurn", message: "test", lightContext: true },
+          }),
+        }),
+      );
+
+      expect(runCliAgentMock).toHaveBeenCalledOnce();
+      expect(runCliAgentMock.mock.calls[0][0]).toMatchObject({
+        bootstrapContextMode: "lightweight",
+        bootstrapContextRunKind: "cron",
+      });
+    });
+
+    it("keeps default manual cron run context policy for CLI runs", async () => {
+      isCliProviderMock.mockReturnValue(true);
+      runCliAgentMock.mockResolvedValue({
+        payloads: [{ text: "output" }],
+        meta: { agentMeta: { sessionId: "manual-cli-session", usage: { input: 5, output: 10 } } },
+      });
+      mockCliFallbackInvocation();
+
+      await runCronIsolatedAgentTurn(
+        makeSkillParams({
+          runEnvironment: "manual",
+          job: makeSkillJob({
+            payload: { kind: "agentTurn", message: "test", lightContext: true },
+          }),
+        }),
+      );
+
+      expect(runCliAgentMock).toHaveBeenCalledOnce();
+      expect(runCliAgentMock.mock.calls[0][0]).toMatchObject({
+        bootstrapContextMode: undefined,
+        bootstrapContextRunKind: undefined,
+      });
+    });
   });
 
   describe("context token fallback", () => {

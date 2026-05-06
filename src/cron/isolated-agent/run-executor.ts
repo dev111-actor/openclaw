@@ -5,6 +5,7 @@ import type { ThinkLevel, VerboseLevel } from "../../auto-reply/thinking.js";
 import type { AgentDefaultsConfig } from "../../config/types.agent-defaults.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { createLazyImportLoader } from "../../shared/lazy-promise.js";
+import type { CronRunEnvironment } from "../service/state.js";
 import type { CronJob } from "../types.js";
 import {
   resolveCronChannelOutputPolicy,
@@ -78,6 +79,7 @@ export function createCronPromptExecutor(params: {
   agentSessionKey: string;
   runSessionKey: string;
   workspaceDir: string;
+  runEnvironment?: CronRunEnvironment;
   lane?: string;
   resolvedVerboseLevel: VerboseLevel;
   thinkLevel: ThinkLevel | undefined;
@@ -171,6 +173,11 @@ export function createCronPromptExecutor(params: {
             onExecutionStarted: params.onExecutionStarted,
             bootstrapPromptWarningSignaturesSeen,
             bootstrapPromptWarningSignature,
+            bootstrapContextMode:
+              params.runEnvironment === "scheduled" && params.agentPayload?.lightContext
+                ? "lightweight"
+                : undefined,
+            bootstrapContextRunKind: params.runEnvironment === "scheduled" ? "cron" : undefined,
             senderIsOwner: true,
           });
           bootstrapPromptWarningSignaturesSeen = resolveBootstrapWarningSignaturesSeen(
@@ -278,6 +285,7 @@ export async function executeCronRun(params: {
   agentSessionKey: string;
   runSessionKey: string;
   workspaceDir: string;
+  runEnvironment?: CronRunEnvironment;
   lane?: string;
   resolvedDelivery: {
     channel?: string;
@@ -323,6 +331,7 @@ export async function executeCronRun(params: {
     agentSessionKey: params.agentSessionKey,
     runSessionKey: params.runSessionKey,
     workspaceDir: params.workspaceDir,
+    runEnvironment: params.runEnvironment,
     lane: params.lane,
     resolvedVerboseLevel,
     thinkLevel: params.thinkLevel,

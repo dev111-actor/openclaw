@@ -90,11 +90,11 @@ export function createLazyGatewayCronState(params: LazyGatewayCronParams): Gatew
     async remove(id) {
       return await (await load()).state.cron.remove(id);
     },
-    async run(id, mode) {
-      return await (await load()).state.cron.run(id, mode);
+    async run(id, mode, opts) {
+      return await (await load()).state.cron.run(id, mode, opts);
     },
-    async enqueueRun(id, mode) {
-      return await (await load()).state.cron.enqueueRun(id, mode);
+    async enqueueRun(id, mode, opts) {
+      return await (await load()).state.cron.enqueueRun(id, mode, opts);
     },
     getJob(id) {
       if (!loaded) {

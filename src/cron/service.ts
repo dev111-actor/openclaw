@@ -1,7 +1,11 @@
 import type { CronServiceContract, CronServiceRunResult } from "./service-contract.js";
 import type { CronListPageOptions } from "./service/list-page-types.js";
 import * as ops from "./service/ops.js";
-import { type CronServiceDeps, createCronServiceState } from "./service/state.js";
+import {
+  type CronRunOptions,
+  type CronServiceDeps,
+  createCronServiceState,
+} from "./service/state.js";
 import type { CronJob, CronJobCreate, CronJobPatch } from "./types.js";
 
 export type { CronEvent, CronServiceDeps } from "./service/state.js";
@@ -44,12 +48,20 @@ export class CronService implements CronServiceContract {
     return await ops.remove(this.state, id);
   }
 
-  async run(id: string, mode?: "due" | "force"): Promise<CronServiceRunResult> {
-    return await ops.run(this.state, id, mode);
+  async run(
+    id: string,
+    mode?: "due" | "force",
+    opts?: CronRunOptions,
+  ): Promise<CronServiceRunResult> {
+    return await ops.run(this.state, id, mode, opts);
   }
 
-  async enqueueRun(id: string, mode?: "due" | "force"): Promise<CronServiceRunResult> {
-    const result = await ops.enqueueRun(this.state, id, mode);
+  async enqueueRun(
+    id: string,
+    mode?: "due" | "force",
+    opts?: CronRunOptions,
+  ): Promise<CronServiceRunResult> {
+    const result = await ops.enqueueRun(this.state, id, mode, opts);
     if (result.ok && "runnable" in result) {
       throw new Error("cron enqueueRun returned unresolved runnable disposition");
     }

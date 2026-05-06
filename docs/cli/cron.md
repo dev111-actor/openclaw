@@ -98,6 +98,8 @@ Note: cron job definitions live in `jobs.json`, while pending runtime state live
 `openclaw cron run <job-id>` force-runs by default. Use `--due` to keep the older "only run if due" behavior.
 </Note>
 
+Use `openclaw cron run <job-id> --as-scheduled` when debugging scheduler-only behavior. The manual trigger still queues immediately, but isolated CLI-backed jobs use the same cron bootstrap context policy as scheduler-triggered runs.
+
 ## Models
 
 `cron add|edit --model <ref>` selects an allowed model for the job.

@@ -15,6 +15,7 @@ import {
   createCronRunDiagnosticsFromError,
   mergeCronRunDiagnostics,
 } from "../run-diagnostics.js";
+import type { CronRunEnvironment } from "../service/state.js";
 import type {
   CronAgentExecutionStarted,
   CronDeliveryTrace,
@@ -421,6 +422,7 @@ type RunCronAgentTurnParams = {
   deps: CliDeps;
   job: CronJob;
   message: string;
+  runEnvironment?: CronRunEnvironment;
   abortSignal?: AbortSignal;
   signal?: AbortSignal;
   onExecutionStarted?: (info?: CronAgentExecutionStarted) => void;
@@ -443,6 +445,7 @@ type PreparedCronRunContext = {
   runSessionId: string;
   runSessionKey: string;
   workspaceDir: string;
+  runEnvironment: CronRunEnvironment;
   commandBody: string;
   cronSession: MutableCronSession;
   persistSessionEntry: PersistCronSessionEntry;
@@ -520,6 +523,7 @@ async function prepareCronRunContext(params: {
     skipOptionalBootstrapFiles: agentCfg?.skipOptionalBootstrapFiles,
   });
   const workspaceDir = workspace.dir;
+  const runEnvironment = input.runEnvironment ?? "scheduled";
 
   const isGmailHook = hookExternalContentSource === "gmail";
   const now = Date.now();
@@ -763,6 +767,7 @@ async function prepareCronRunContext(params: {
       runSessionId,
       runSessionKey,
       workspaceDir,
+      runEnvironment,
       commandBody,
       cronSession,
       persistSessionEntry,
@@ -1084,6 +1089,7 @@ export async function runCronIsolatedAgentTurn(params: {
       agentSessionKey: prepared.context.agentSessionKey,
       runSessionKey: prepared.context.runSessionKey,
       workspaceDir: prepared.context.workspaceDir,
+      runEnvironment: prepared.context.runEnvironment,
       lane: params.lane,
       resolvedDelivery: {
         channel: prepared.context.resolvedDelivery.channel,

@@ -243,6 +243,7 @@ async function runCronRunAndCaptureExit(params: {
   return {
     exitSpy,
     runOpts: (runCall?.[1] ?? {}) as { timeout?: string },
+    runParams: runCall?.[2] as { id?: string; mode?: string; asScheduled?: boolean } | undefined,
   };
 }
 
@@ -276,6 +277,19 @@ describe("cron cli", () => {
   ])("$name", async ({ ran, enqueued, expectedExitCode }) => {
     const { exitSpy } = await runCronRunAndCaptureExit({ ran, enqueued });
     expect(exitSpy).toHaveBeenCalledWith(expectedExitCode);
+  });
+
+  it("passes --as-scheduled through cron run", async () => {
+    const { runParams } = await runCronRunAndCaptureExit({
+      ran: true,
+      args: ["cron", "run", "job-1", "--as-scheduled"],
+    });
+
+    expect(runParams).toMatchObject({
+      id: "job-1",
+      mode: "force",
+      asScheduled: true,
+    });
   });
 
   it("trims model and thinking on cron add", { timeout: CRON_CLI_TEST_TIMEOUT_MS }, async () => {
